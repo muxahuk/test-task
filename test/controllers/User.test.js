@@ -41,9 +41,8 @@ describe('UserController', () => {
     ];
     describe('.constructor(UserModel)', () => {
         it('should set ._UserModel property', () => {
-            const Model = class Model {};
-            const instance = create(Model);
-            expect(instance._UserModel).to.equal(Model);
+            const instance = create();
+            expect(instance._UserModel).to.equal(UserModel);
         });
     });
     describe('.getAll(req, res, next)', () => {
@@ -195,6 +194,33 @@ describe('UserController', () => {
                 expect(next).to.have.been.calledWithMatch(sinon.match.has('message', 'User with such login already exists'));
             });
         });
+        context('when occurs validation error', () => {
+            const error = new Error('fail');
+            error.name = 'Error';
+            error.data = [
+                {
+                    message: 'some validation message'
+                }
+            ];
+            beforeEach(() => {
+                tracker.on('query', (query) => query.reject(error));
+            });
+            it('should call next method once', async () => {
+                const instance = create();
+                await instance.post(req, res, next);
+                expect(next).to.have.been.calledOnce;
+            });
+            it('should call next method with error', async () => {
+                const instance = create();
+                await instance.post(req, res, next);
+                expect(next).to.have.been.calledWithMatch(Error);
+            });
+            it('should call next method with error message "Validation Error: some validation message"', async () => {
+                const instance = create();
+                await instance.post(req, res, next);
+                expect(next).to.have.been.calledWithMatch(sinon.match.has('message', 'Validation Error: some validation message'));
+            });
+        });
         context('when db query fails with error', () => {
             const error = new Error('fail');
             beforeEach(() => {
@@ -267,6 +293,33 @@ describe('UserController', () => {
                 const instance = create();
                 await instance.put(req, res, next);
                 expect(next).to.have.been.calledWithMatch(sinon.match.has('message', 'No such user'));
+            });
+        });
+        context('when occurs validation error', () => {
+            const error = new Error('fail');
+            error.name = 'Error';
+            error.data = [
+                {
+                    message: 'some validation message2'
+                }
+            ];
+            beforeEach(() => {
+                tracker.on('query', (query) => query.reject(error));
+            });
+            it('should call next method once', async () => {
+                const instance = create();
+                await instance.put(req, res, next);
+                expect(next).to.have.been.calledOnce;
+            });
+            it('should call next method with error', async () => {
+                const instance = create();
+                await instance.put(req, res, next);
+                expect(next).to.have.been.calledWithMatch(Error);
+            });
+            it('should call next method with error message "Validation Error: some validation message2"', async () => {
+                const instance = create();
+                await instance.put(req, res, next);
+                expect(next).to.have.been.calledWithMatch(sinon.match.has('message', 'Validation Error: some validation message2'));
             });
         });
         context('when db query fails with error', () => {

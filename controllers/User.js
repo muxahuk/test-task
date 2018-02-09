@@ -1,6 +1,16 @@
 const { UNIQUE_VIOLATION } = require('pg-error-constants');
 
 class UserController {
+    static _formatValidationError (e) {
+        if (e.name === 'Error' && e.data) {
+            const message = `${e.data[0].dataPath ? `'${e.data[0].dataPath.split('.')[1]}' ` : ''}${e.data[0].message}`;
+            const error = new Error(`Validation Error: ${message}`);
+            error.stack = e.stack;
+            return error;
+        }
+        return e;
+    }
+
     constructor (UserModel) {
         this._UserModel = UserModel;
     }
@@ -29,10 +39,9 @@ class UserController {
 
     async post (req, res, next) {
         const { login, email, name } = req.body;
-        // Since no requirements where given i do not check the params.
-        // But, if necessary, we should check if they are empty and fail earlier
-        const user = new this._UserModel({ login, email, name, age: req.body.age !== undefined ? parseInt(req.body.age, 10) : null });
         try {
+            const user = new this._UserModel({ login, email, name, age: req.body.age !== undefined ? parseInt(req.body.age, 10) : null });
+            user.validate();
             await user.save();
             res.json(user);
         } catch (e) {
@@ -41,7 +50,7 @@ class UserController {
                 error.stack = e.stack;
                 return next(error);
             }
-            next(e);
+            next(this.constructor._formatValidationError(e));
         }
     }
 
@@ -52,14 +61,16 @@ class UserController {
             if (!user) {
                 throw new Error('No such user');
             }
-            // login is primary key, don't know if it should be possible to change it. assuming not.
+
             ['email', 'name', 'age']
                 .filter((i) => req.body[i] !== undefined)
                 .forEach((i) => (user[i] = (i === 'age') ? parseInt(req.body[i], 10) : req.body[i]));
+
+            user.validate();
             await user.save();
             res.json(user);
         } catch (e) {
-            next(e);
+            next(this.constructor._formatValidationError(e));
         }
     }
 }
