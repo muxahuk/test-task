@@ -76,7 +76,7 @@ describe('Server', () => {
                     .get('/user/test')
                     .expect(200);
             });
-            it('should respond with users array', () => {
+            it('should respond with user object', () => {
                 return supertest(app)
                     .get('/user/test')
                     .expect(users[0]);
@@ -122,7 +122,7 @@ describe('Server', () => {
                     .send(newUser)
                     .expect(200);
             });
-            it('should respond with users array', () => {
+            it('should respond with new user object', () => {
                 return supertest(app)
                     .post('/user')
                     .send(newUser)
@@ -177,7 +177,7 @@ describe('Server', () => {
                     .send(updateUser)
                     .expect(200);
             });
-            it('should respond with users array', () => {
+            it('should respond with updated user object', () => {
                 return supertest(app)
                     .put('/user/test3')
                     .send(updateUser)

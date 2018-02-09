@@ -28,7 +28,7 @@ class UserModel extends Database.Model {
                     minimum: 0
                 }
             },
-            required: ['email', 'name', 'age']
+            required: ['login', 'email', 'name', 'age']
         };
     }
 }
